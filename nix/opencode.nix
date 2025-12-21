@@ -121,12 +121,7 @@ postInstall = ''
   
   # NEW: Dynamically create plugin's node_modules from package.json
   cd $out/lib/opencode/node_modules/@opencode-ai/plugin
-  
-  # Remove node_modules if it exists (might be read-only from cp)
-  rm -rf node_modules
-  
-  # Create fresh writable node_modules
-  mkdir -p node_modules
+  chmod -R u+w . # this allows us to create the symlinks below inside of the existing dirs
   
   # Read dependencies from package.json and create symlinks
   for dep in $(jq -r '.dependencies | keys[]' package.json 2>/dev/null || echo ""); do

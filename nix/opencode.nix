@@ -93,6 +93,11 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     cp -r ../../node_modules/.bun $out/lib/opencode/node_modules/
     mkdir -p $out/lib/opencode/node_modules/@opentui
 
+    mkdir -p $out/lib/opencode/node_modules/@opencode-ai
+    cp -r ../../packages/plugin $out/lib/opencode/node_modules/@opencode-ai/plugin
+    cp -r ../../packages/sdk/js $out/lib/opencode/node_modules/@opencode-ai/sdk  
+    cp -r ../../packages/script $out/lib/opencode/node_modules/@opencode-ai/script
+
     mkdir -p $out/bin
     makeWrapper ${bun}/bin/bun $out/bin/opencode \
       --add-flags "run" \

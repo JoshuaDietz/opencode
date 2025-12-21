@@ -109,7 +109,8 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     runHook postInstall
   '';
 
-  postInstall = ''
+postInstall = ''
+  # Existing @opentui symlinks
   for pkg in $out/lib/opencode/node_modules/.bun/@opentui+core-* $out/lib/opencode/node_modules/.bun/@opentui+solid-* $out/lib/opencode/node_modules/.bun/@opentui+core@* $out/lib/opencode/node_modules/.bun/@opentui+solid@*; do
     if [ -d "$pkg" ]; then
       pkgName=$(basename "$pkg" | sed 's/@opentui+\([^@]*\)@.*/\1/')
@@ -119,9 +120,13 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   done
   
   # NEW: Dynamically create plugin's node_modules from package.json
-  mkdir -p $out/lib/opencode/node_modules/@opencode-ai/plugin/node_modules
-  
   cd $out/lib/opencode/node_modules/@opencode-ai/plugin
+  
+  # Remove node_modules if it exists (might be read-only from cp)
+  rm -rf node_modules
+  
+  # Create fresh writable node_modules
+  mkdir -p node_modules
   
   # Read dependencies from package.json and create symlinks
   for dep in $(jq -r '.dependencies | keys[]' package.json 2>/dev/null || echo ""); do
@@ -151,6 +156,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     fi
   done
 '';
+
 
   dontFixup = true;
 

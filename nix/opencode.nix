@@ -110,7 +110,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   '';
 
   postInstall = ''
-    for pkg in $out/lib/opencode/node_modules/.bun/@opentui+core-* $out/lib/opencode/node_modules/.bun/@opentui+solid-* $out/lib/opencode/node_modules/.bun/@opentui+core@* $out/lib/opencode/node_modules/.bun/@opentui+solid@*; do
+  for pkg in $out/lib/opencode/node_modules/.bun/@opentui+core-* $out/lib/opencode/node_modules/.bun/@opentui+solid-* $out/lib/opencode/node_modules/.bun/@opentui+core@* $out/lib/opencode/node_modules/.bun/@opentui+solid@*; do
     if [ -d "$pkg" ]; then
       pkgName=$(basename "$pkg" | sed 's/@opentui+\([^@]*\)@.*/\1/')
       ln -sf ../.bun/$(basename "$pkg")/node_modules/@opentui/$pkgName \
@@ -137,7 +137,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
         ln -sf "../../$pkgName" "node_modules/$dep"
       else
         # Find in .bun (scoped packages use + instead of / in .bun)
-        bunPkg=$(find ../../.bun -maxdepth 1 -name "${scope}+${pkgName}@*" -type d 2>/dev/null | head -n1)
+        bunPkg=$(find ../../.bun -maxdepth 1 -name "$scope+$pkgName@*" -type d 2>/dev/null | head -n1)
         if [ -n "$bunPkg" ]; then
           ln -sf "../../../.bun/$(basename "$bunPkg")/node_modules/$dep" "node_modules/$dep"
         fi
@@ -150,7 +150,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
       fi
     fi
   done
-  '';
+'';
 
   dontFixup = true;
 

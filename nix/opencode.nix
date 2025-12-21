@@ -26,6 +26,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   nativeBuildInputs = [
     bun
     makeBinaryWrapper
+    jq
   ];
 
   env.MODELS_DEV_API_JSON = args.modelsDev;
@@ -97,7 +98,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     cp -r ../../packages/plugin $out/lib/opencode/node_modules/@opencode-ai/plugin
     cp -r ../../packages/sdk/js $out/lib/opencode/node_modules/@opencode-ai/sdk  
     cp -r ../../packages/script $out/lib/opencode/node_modules/@opencode-ai/script
-    
+
     mkdir -p $out/bin
     makeWrapper ${bun}/bin/bun $out/bin/opencode \
       --add-flags "run" \
@@ -123,7 +124,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   cd $out/lib/opencode/node_modules/@opencode-ai/plugin
   
   # Read dependencies from package.json and create symlinks
-  for dep in $(${pkgs.jq}/bin/jq -r '.dependencies | keys[]' package.json 2>/dev/null || echo ""); do
+  for dep in $(jq -r '.dependencies | keys[]' package.json 2>/dev/null || echo ""); do
     if [[ "$dep" == @* ]]; then
       # Scoped package (e.g., @opencode-ai/sdk)
       scope=$(echo "$dep" | cut -d'/' -f1)

@@ -1,4 +1,4 @@
-{ lib, stdenvNoCC, bun, ripgrep, makeBinaryWrapper }:
+{ lib, stdenvNoCC, bun, ripgrep, makeBinaryWrapper, jq }:
 args:
 let
   scripts = args.scripts;

@@ -414,6 +414,7 @@ export namespace Config {
         .object({
           edit: Permission.optional(),
           bash: z.union([Permission, z.record(z.string(), Permission)]).optional(),
+          skill: z.union([Permission, z.record(z.string(), Permission)]).optional(),
           webfetch: Permission.optional(),
           doom_loop: Permission.optional(),
           external_directory: Permission.optional(),
@@ -456,6 +457,8 @@ export namespace Config {
         .describe("Scroll messages down by half page"),
       messages_first: z.string().optional().default("ctrl+g,home").describe("Navigate to first message"),
       messages_last: z.string().optional().default("ctrl+alt+g,end").describe("Navigate to last message"),
+      messages_next: z.string().optional().default("none").describe("Navigate to next message"),
+      messages_previous: z.string().optional().default("none").describe("Navigate to previous message"),
       messages_last_user: z.string().optional().default("none").describe("Navigate to last user message"),
       messages_copy: z.string().optional().default("<leader>y").describe("Copy message"),
       messages_undo: z.string().optional().default("<leader>u").describe("Undo message"),
@@ -560,8 +563,10 @@ export namespace Config {
       history_next: z.string().optional().default("down").describe("Next history item"),
       session_child_cycle: z.string().optional().default("<leader>right").describe("Next child session"),
       session_child_cycle_reverse: z.string().optional().default("<leader>left").describe("Previous child session"),
+      session_parent: z.string().optional().default("<leader>up").describe("Go to parent session"),
       terminal_suspend: z.string().optional().default("ctrl+z").describe("Suspend terminal"),
       terminal_title_toggle: z.string().optional().default("none").describe("Toggle terminal title"),
+      tips_toggle: z.string().optional().default("<leader>h").describe("Toggle tips on home screen"),
     })
     .strict()
     .meta({
@@ -628,6 +633,7 @@ export namespace Config {
       $schema: z.string().optional().describe("JSON schema reference for configuration validation"),
       theme: z.string().optional().describe("Theme name to use for the interface"),
       keybinds: Keybinds.optional().describe("Custom keybind configurations"),
+      logLevel: Log.Level.optional().describe("Log level"),
       tui: TUI.optional().describe("TUI specific settings"),
       command: z
         .record(z.string(), Command)
@@ -761,6 +767,7 @@ export namespace Config {
         .object({
           edit: Permission.optional(),
           bash: z.union([Permission, z.record(z.string(), Permission)]).optional(),
+          skill: z.union([Permission, z.record(z.string(), Permission)]).optional(),
           webfetch: Permission.optional(),
           doom_loop: Permission.optional(),
           external_directory: Permission.optional(),

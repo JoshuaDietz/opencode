@@ -4,6 +4,7 @@
   bun,
   ripgrep,
   makeBinaryWrapper,
+  jq
 }:
 args:
 let
@@ -29,6 +30,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   nativeBuildInputs = [
     bun
     makeBinaryWrapper
+    jq
   ];
 
   env.MODELS_DEV_API_JSON = args.modelsDev;
@@ -96,6 +98,11 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     cp -r ../../node_modules/.bun $out/lib/opencode/node_modules/
     mkdir -p $out/lib/opencode/node_modules/@opentui
 
+    mkdir -p $out/lib/opencode/node_modules/@opencode-ai
+    cp -r ../../packages/plugin $out/lib/opencode/node_modules/@opencode-ai/plugin
+    cp -r ../../packages/sdk/js $out/lib/opencode/node_modules/@opencode-ai/sdk  
+    cp -r ../../packages/script $out/lib/opencode/node_modules/@opencode-ai/script
+
     mkdir -p $out/bin
     makeWrapper ${bun}/bin/bun $out/bin/opencode \
       --add-flags "run" \
@@ -106,15 +113,49 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     runHook postInstall
   '';
 
-  postInstall = ''
-    for pkg in $out/lib/opencode/node_modules/.bun/@opentui+core-* $out/lib/opencode/node_modules/.bun/@opentui+solid-* $out/lib/opencode/node_modules/.bun/@opentui+core@* $out/lib/opencode/node_modules/.bun/@opentui+solid@*; do
-      if [ -d "$pkg" ]; then
-        pkgName=$(basename "$pkg" | sed 's/@opentui+\([^@]*\)@.*/\1/')
-        ln -sf ../.bun/$(basename "$pkg")/node_modules/@opentui/$pkgName \
-          $out/lib/opencode/node_modules/@opentui/$pkgName
+postInstall = ''
+  # Existing @opentui symlinks
+  for pkg in $out/lib/opencode/node_modules/.bun/@opentui+core-* $out/lib/opencode/node_modules/.bun/@opentui+solid-* $out/lib/opencode/node_modules/.bun/@opentui+core@* $out/lib/opencode/node_modules/.bun/@opentui+solid@*; do
+    if [ -d "$pkg" ]; then
+      pkgName=$(basename "$pkg" | sed 's/@opentui+\([^@]*\)@.*/\1/')
+      ln -sf ../.bun/$(basename "$pkg")/node_modules/@opentui/$pkgName \
+        $out/lib/opencode/node_modules/@opentui/$pkgName
+    fi
+  done
+  
+  # NEW: Dynamically create plugin's node_modules from package.json
+  cd $out/lib/opencode/node_modules/@opencode-ai/plugin
+  chmod -R u+w . # this allows us to create the symlinks below inside of the existing dirs
+  
+  # Read dependencies from package.json and create symlinks
+  for dep in $(jq -r '.dependencies | keys[]' package.json 2>/dev/null || echo ""); do
+    if [[ "$dep" == @* ]]; then
+      # Scoped package (e.g., @opencode-ai/sdk)
+      scope=$(echo "$dep" | cut -d'/' -f1)
+      pkgName=$(echo "$dep" | cut -d'/' -f2)
+      
+      mkdir -p "node_modules/$scope"
+      
+      # Check if it's a workspace package (already copied separately)
+      if [ -d "../../$pkgName" ]; then
+        ln -sf "../../$pkgName" "node_modules/$dep"
+      else
+        # Find in .bun (scoped packages use + instead of / in .bun)
+        bunPkg=$(find ../../.bun -maxdepth 1 -name "$scope+$pkgName@*" -type d 2>/dev/null | head -n1)
+        if [ -n "$bunPkg" ]; then
+          ln -sf "../../../.bun/$(basename "$bunPkg")/node_modules/$dep" "node_modules/$dep"
+        fi
       fi
-    done
-  '';
+    else
+      # Unscoped package (e.g., zod)
+      bunPkg=$(find ../../.bun -maxdepth 1 -name "$dep@*" -type d 2>/dev/null | head -n1)
+      if [ -n "$bunPkg" ]; then
+        ln -sf "../../../.bun/$(basename "$bunPkg")/node_modules/$dep" "node_modules/$dep"
+      fi
+    fi
+  done
+'';
+
 
   dontFixup = true;
 
